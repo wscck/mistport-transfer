@@ -1,118 +1,76 @@
-# MistPort（雾港传输）
+# MistPort（雾港传输）2.2
 
-**简单、轻量、私有化部署的临时文件传输服务。**
+自托管临时文件传输服务，局域网 / 互联网均可访问。应用容器监听 `8000`，推荐宿主机映射 `5555:8000`。
 
-MistPort（雾港传输）是一款支持自托管部署的临时文件传输工具，旨在让不同设备之间的文件分享更加简单。
+## 功能
+- 发送、接收均使用居中毛玻璃弹窗。
+- 支持发送单个/多个文件、整个文件夹（自动打包 ZIP）、文字（UTF-8 TXT）。
+- 上传完成生成 6 位随机数字接收码，不生成分享链接。
+- 不提供管理员登录、不设置提取密码。
+- 默认接收码有效期 1 小时，可选 3 / 6 / 12 / 24 小时。
+- 接收码在文件有效期间保持占用；过期清理后才可再次生成。
+- 后台每 60 秒清理过期文件。
+- 最近传输显示遮蔽文件名、时间、大小和下载次数。
+- 数据库和上传文件统一保存在 `/data`，必须使用宿主机目录挂载持久化。
 
-无需生成分享链接，通过自动生成的 6 位数字接收码即可传输文件。支持单个文件、整个文件夹和文本内容的发送与接收。
+## Docker Hub：构建并推送镜像
 
-项目基于 FastAPI 开发，支持 Docker 部署，可运行在 Linux 服务器上。
-
-## ✨ 功能特点
-
-- **6 位接收码**：自动生成随机 6 位数字接收码，无需手动设置。
-- **临时传输**：支持设置文件传输有效期，到期后自动失效。
-- **自动清理**：传输文件过期后自动删除，减少服务器存储占用。
-- **文件传输**：支持上传和接收单个文件。
-- **文件夹传输**：支持整个文件夹上传，自动打包为 ZIP，并保留原有目录结构。
-- **文本传输**：支持发送文字内容，自动生成 UTF-8 编码的 TXT 文件。
-- **最近传输记录**：显示最近传输的文件信息、时间、大小和下载次数。
-- **Docker 部署**：通过 Docker 快速部署，无需复杂的环境配置。
-- **持久化存储**：支持将上传文件保存到宿主机指定目录。
-
-## 🛠️ 技术栈
-
-- Python
-- FastAPI
-- Uvicorn
-- HTML
-- CSS
-- JavaScript
-- Docker
-
-## 🚀 快速部署
-
-### 1. 拉取 Docker 镜像
+在项目根目录（有本 Dockerfile 的目录）执行。把 `cwkcck` 替换为自己的 Docker Hub 用户名（如果不同）：
 
 ```bash
+docker login
+docker build -t cwkcck/mistport:2.2 -t cwkcck/mistport:latest .
+docker push cwkcck/mistport:2.2
+docker push cwkcck/mistport:latest
+```
+
+先在 Docker Hub 创建仓库 `mistport`。如仓库设为 Private，服务器拉取前也需要 `docker login`。
+
+## Linux 服务器：单条 docker run 部署
+
+```bash
+sudo mkdir -p /data/mistport/storage
 docker pull cwkcck/mistport:latest
-```
-
-### 2. 创建文件存储目录
-
-```bash
-mkdir -p ./storage
-```
-
-### 3. 启动容器
-
-```bash
 docker run -d \
   --name mistport \
   --restart unless-stopped \
   -p 5555:8000 \
-  -v ./storage:/data \
+  -v /data/mistport/storage:/data \
   -e DATA_DIR=/data \
   -e MAX_FILE_MB=2048 \
   cwkcck/mistport:latest
 ```
 
-### 4. 访问服务
+访问 `http://服务器IP:5555`。
 
-在浏览器中打开：
+## 数据目录
+- `/data/files/`：上传文件
+- `/data/mistport.db`：元数据数据库
 
-```text
-http://服务器IP:5555
+宿主机数据目录为 `/data/mistport/storage`。更换镜像或删除容器不会删除此目录。不要执行 `docker run --rm`，也不要删除挂载目录。
+
+## 更新镜像
+
+```bash
+docker pull cwkcck/mistport:latest
+docker stop mistport
+docker rm mistport
+docker run -d \
+  --name mistport \
+  --restart unless-stopped \
+  -p 5555:8000 \
+  -v /data/mistport/storage:/data \
+  -e DATA_DIR=/data \
+  -e MAX_FILE_MB=2048 \
+  cwkcck/mistport:latest
 ```
 
-将其中的 `服务器IP` 替换为实际服务器 IP 地址。
+## 检查与日志
 
-## 📦 Docker 镜像
-
-Docker Hub：
-
-https://hub.docker.com/r/cwkcck/mistport
-
-当前提供的镜像版本：
-
-- `cwkcck/mistport:latest`
-- `cwkcck/mistport:2.2`
-
-## 💾 文件存储
-
-MistPort 使用 Docker 数据卷保存上传文件。
-
-容器内部存储目录：
-
-```text
-/data
+```bash
+docker ps
+ docker logs -f mistport
 ```
 
-可以通过挂载宿主机目录实现文件持久化，容器删除或重建时不会影响宿主机中保存的数据。
-
-请根据实际使用情况预留足够的磁盘空间。
-
-## 🔒 安全说明
-
-MistPort 适合部署在个人服务器或自有 Linux 服务器上。
-
-如果需要开放公网访问，建议：
-
-- 配置 HTTPS 加密访问。
-- 合理配置服务器防火墙。
-- 注意服务器磁盘空间和上传文件大小限制。
-- 不要将不可信的服务器环境直接暴露在公网。
-
-## 🗺️ 项目定位
-
-MistPort 希望提供一种简单、方便的临时文件传输方式。
-
-无需复杂操作，不依赖第三方文件托管平台，只需要自己的服务器，就可以在不同设备之间传输文件。
-
-## 📄 开源许可
-
-项目开源许可证暂未确定，后续将根据项目实际情况补充。
-
----
-
-**MistPort（雾港传输）——让文件传输更简单。**
+## 安全提示
+公网使用建议配置域名和 HTTPS 反向代理。不要把管理/数据库目录暴露到公网。定期备份 `/data/mistport/storage`。

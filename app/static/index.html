@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>雾港传输 · MistPort</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="ambient a1"></div><div class="ambient a2"></div>
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brandmark"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 24h23M25 15l9 9-9 9M39 13v22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 13v22" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity=".55"/></svg></span>
+    <span><b>雾港传输</b><small>MISTPORT · FILE EXCHANGE</small></span>
+  </a>
+</header>
+<main>
+<section class="hero">
+  <div class="hero-tag">FAST · PRIVATE · SELF-HOSTED</div>
+  <div class="hero-symbol"><svg viewBox="0 0 100 100"><path d="M23 50h42M54 36l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M77 28v44" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".42"/><path d="M17 28v44" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".42"/></svg></div>
+  <h1>文件，轻松抵达。</h1>
+  <div class="hero-actions">
+    <button class="action primary" id="sendOpen"><span class="action-icon">↑</span><span><b>发送文件</b><small>选择文件并生成临时接收码</small></span><span class="chevron">↗</span></button>
+    <button class="action glass" id="receiveOpen"><span class="action-icon">↓</span><span><b>接收文件</b><small>输入接收码即可取件</small></span><span class="chevron">↗</span></button>
+  </div>
+</section>
+<section class="how">
+  <div class="how-card"><span class="step">01</span><b>发送方</b><p>选择文件，并设置接收码有效时长。</p></div>
+  <div class="how-card"><span class="step">02</span><b>获取接收码</b><p>上传完成后自动生成 6 位随机数字码。</p></div>
+  <div class="how-card"><span class="step">03</span><b>接收方</b><p>输入接收码，验证后即可下载文件。</p></div>
+</section>
+<footer><span class="foot-mark">M</span><span>雾港传输 · 临时文件自动清理</span><span class="foot-right">TEMPORARY TRANSFER</span></footer>
+</main>
+
+<!-- Send modal -->
+<div class="modal" id="sendModal">
+  <div class="modal-backdrop" data-dismiss="sendModal"></div>
+  <section class="dialog">
+    <button class="x" data-dismiss="sendModal" aria-label="关闭">×</button>
+    <div class="dialog-icon">↑</div><div class="dialog-kicker">SEND FILES</div>
+    <h2>发送文件</h2><p class="sub">上传完成后自动生成接收码。接收码仅在所选时长内有效，到期文件自动删除。</p>
+    <div class="send-tabs" role="tablist" aria-label="发送类型">
+      <button type="button" class="send-tab active" data-mode="files">▤ 文件</button>
+      <button type="button" class="send-tab" data-mode="folder">▰ 文件夹</button>
+      <button type="button" class="send-tab" data-mode="text">✎ 文字</button>
+    </div>
+    <div class="dropzone" id="drop"><div class="upload-plus">＋</div><b id="dropTitle">拖放文件到这里</b><span id="dropHint">或点击选择文件</span><button class="mini" id="choose">浏览文件</button><input id="fileInput" type="file" multiple hidden><input id="folderInput" type="file" webkitdirectory directory multiple hidden></div>
+    <div class="text-compose" id="textCompose">
+      <input id="textTitle" class="text-title" maxlength="80" placeholder="文字名称（可选）" value="文字消息">
+      <textarea id="textContent" rows="7" maxlength="200000" placeholder="在这里输入要发送的文字内容…"></textarea>
+      <small>文字将作为 UTF-8 .txt 文件发送，接收方输入接收码即可下载。</small>
+    </div>
+    <div id="selected" class="selected"></div>
+    <div class="expiry-picker">
+      <span class="expiry-label">接收码有效期</span>
+      <div class="expiry-control" id="expiryControl">
+        <button type="button" class="expiry-current" id="expiryCurrent" aria-haspopup="true" aria-expanded="false"><span id="expiryText">1 小时（默认）</span><span class="down-chevron">⌄</span></button>
+        <div class="expiry-options" id="expiryOptions">
+          <button type="button" data-hours="1" class="chosen">1 小时 <small>默认 · 到期自动删除</small></button>
+          <button type="button" data-hours="3">3 小时</button>
+          <button type="button" data-hours="6">6 小时</button>
+          <button type="button" data-hours="12">12 小时</button>
+          <button type="button" data-hours="24">24 小时 <small>最长有效期</small></button>
+        </div>
+      </div>
+      <small class="expiry-hint">鼠标移入可展开选择，也可点击选择</small>
+    </div>
+    <button class="submit" id="uploadBtn" disabled>开始上传 <span>→</span></button>
+    <div id="uploadStatus" class="status"></div>
+  </section>
+</div>
+
+<!-- Receive modal -->
+<div class="modal" id="receiveModal">
+  <div class="modal-backdrop" data-dismiss="receiveModal"></div>
+  <section class="dialog receive-dialog">
+    <button class="x" data-dismiss="receiveModal" aria-label="关闭">×</button>
+    <div class="dialog-icon down">↓</div><div class="dialog-kicker">RECEIVE FILES</div>
+    <h2>接收文件</h2><p class="sub">输入发送方提供的 6 位数字接收码。接收码过期后将无法使用。</p>
+    <label class="code-label">6 位接收码</label>
+    <input class="code-input" id="receiveCode" inputmode="numeric" maxlength="6" placeholder="— — — — — —" autocomplete="one-time-code">
+    <button class="submit" id="receiveBtn">验证并下载 <span>→</span></button>
+    <div id="receiveStatus" class="status"></div>
+  </section>
+</div>
+
+<!-- One-time code notification modal -->
+<div class="modal code-notice-modal" id="codeNoticeModal">
+  <div class="modal-backdrop"></div>
+  <section class="dialog code-notice">
+    <button class="x" data-dismiss="codeNoticeModal" aria-label="关闭">×</button>
+    <div class="success-mark">✓</div><div class="dialog-kicker">UPLOAD COMPLETE</div>
+    <h2>文件已发送</h2><p class="sub">请把下面的接收码告诉接收方。此窗口关闭后，接收码不会再次显示。</p>
+    <div id="codeResults"></div>
+    <button class="submit" id="noticeDone">完成 <span>✓</span></button>
+  </section>
+</div>
+
+<div class="recent-stack" id="recentStack">
+  <div class="recent-head"><span class="live-dot"></span><b>最近传输</b><small>RECENT ACTIVITY</small></div>
+  <div id="recentItems"></div>
+</div>
+<script src="/app.js"></script>
+</body></html>

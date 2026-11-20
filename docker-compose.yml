@@ -1,0 +1,13 @@
+services:
+  mistport:
+    build:
+      context: ./app
+    container_name: mistport
+    restart: unless-stopped
+    ports:
+      - "5555:8000"
+    environment:
+      DATA_DIR: /data
+      MAX_FILE_MB: ${MAX_FILE_MB:-2048}
+    volumes:
+      - ./storage:/data
